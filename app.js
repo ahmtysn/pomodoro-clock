@@ -1,18 +1,23 @@
-let countDown;
+let countDown; // The id of the setInternal that I used
+
+const form = document.customForm;
 const upArrow = document.getElementById('up');
+const arrangeTime = document.getElementById('arrangeTime');
 const downArrow = document.getElementById('down');
-const play = document.getElementById('play');
-const stop = document.getElementById('stop');
-const timeDisplay = document.querySelector('.timeDisplay');
-const endTimeDisplay = document.querySelector('.timeEnd');
+
+const endTextDisplay = document.getElementById('end');
 const minDisplay = document.getElementById('min');
 const secDisplay = document.getElementById('sec');
-const hourDisplay = document.getElementById('hour');
-const form = document.customForm;
+
+const endTimeDisplay = document.querySelector('.timeEnd'); // with calculating it will show the finish time
+const play = document.getElementById('play');
+const stop = document.getElementById('stop');
+
 const audioClick = document.getElementById('click');
 const audioFinish = document.getElementById('finish');
 
 function timer(seconds) {
+  // It is main function
   clearInterval(countDown);
   const now = Date.now();
   const then = now + seconds * 1000;
@@ -23,58 +28,66 @@ function timer(seconds) {
       display(seconds);
     } else {
       audioFinish.play();
-      timeDisplay.textContent = `Time is Up`;
+      endTextDisplay.style.visibility = 'visible';
+      setTimeout(() => {
+        endTextDisplay.style.visibility = 'hidden';
+      }, 3000);
+      arrangeTime.textContent = '00';
       clearInterval(countDown);
     }
   }, 1000);
   endTime(then);
 }
+
 function endTime(total) {
-  const end = new Date(total);
+  const end = new Date(total); // with milliseconds it will show the real time
   const hrs = end.getHours();
   const min = end.getMinutes();
   endTimeDisplay.textContent = `End Time ${hrs < 10 ? '0' : ''}${hrs}:${min < 10 ? '0' : ''}${min}`;
 }
 function display(seconds) {
-  const hour = Math.floor(seconds / 60 / 60);
-  const minutes = Math.floor((seconds / 60) % 60);
+  const remainMinutes = Math.floor(seconds / 60);
   const remainSeconds = seconds % 60;
-  hourDisplay.textContent = `${hour < 10 ? '0' : ''}${hour}`;
-  minDisplay.textContent = `${minutes < 10 ? '0' : ''}${minutes}`;
+  minDisplay.textContent = `${remainMinutes < 10 ? '0' : ''}${remainMinutes}`;
   secDisplay.textContent = `${remainSeconds < 10 ? '0' : ''}${remainSeconds}`;
 }
 
+// updateSeconds => after event listener (pause,play) to protect value of time display
 function updateSeconds() {
-  const totalSeconds =
-    parseFloat(hourDisplay.innerText) * 3600 +
-    parseFloat(minDisplay.innerText) * 60 +
-    parseFloat(secDisplay.innerText);
+  const totalSeconds = +minDisplay.innerText * 60 + +secDisplay.innerText; // (+) is for parse the string to number
   return totalSeconds;
 }
-function plus25() {
+function plus() {
   audioClick.play();
-  const plus25min = updateSeconds() + 25 * 60;
   clearInterval(countDown);
-  display(plus25min);
-}
-function minus25() {
-  audioClick.play();
-  const remainMinutes = parseFloat(hourDisplay.innerText * 60) + parseFloat(minDisplay.innerText);
-  if (remainMinutes >= 25) {
-    const min25min = updateSeconds() - 25 * 60;
-    clearInterval(countDown);
-    display(min25min);
+  let remainMinutes = +arrangeTime.textContent;
+  if (remainMinutes < 60) {
+    arrangeTime.textContent = remainMinutes + 1; // increase one minute
+    arrangeTime.textContent = `${arrangeTime.textContent < 10 ? 0 : ''}${arrangeTime.textContent}`;
+    display(+arrangeTime.textContent * 60);
   } else {
-    alert("It's impossible! You have less than 25 minutes");
+    alert('You reached the max value. Thank you for your understanding.');
+  }
+}
+function minus() {
+  audioClick.play();
+  clearInterval(countDown);
+  let remainMinutes = +arrangeTime.textContent;
+  if (remainMinutes >= 1) {
+    arrangeTime.textContent = remainMinutes - 1; // decrease one minute
+    arrangeTime.textContent = `${arrangeTime.textContent < 10 ? 0 : ''}${arrangeTime.textContent}`;
+    display(+arrangeTime.textContent * 60);
+  } else {
+    alert("It's impossible! You are at the zero point!");
   }
 }
 function stopTimer() {
   audioClick.play();
   clearInterval(countDown);
-  display(seconds);
 }
 function startTimer() {
   audioClick.play();
+  form.minutes.value = '';
   const seconds = updateSeconds();
   timer(seconds);
 }
@@ -83,11 +96,16 @@ function startTimer() {
 
 form.addEventListener('submit', function(e) {
   e.preventDefault();
-  const seconds = this.minutes.value * 60;
-  clearInterval(countDown);
-  display(seconds);
+  if (this.minutes.value > 0 && this.minutes.value <= 60) {
+    const seconds = this.minutes.value * 60;
+    clearInterval(countDown);
+    display(seconds);
+    arrangeTime.textContent = this.minutes.value;
+  } else {
+    alert(`Please give value between 0-60 minutes`);
+  }
 });
-upArrow.addEventListener('click', plus25);
-downArrow.addEventListener('click', minus25);
+upArrow.addEventListener('click', plus);
+downArrow.addEventListener('click', minus);
 stop.addEventListener('click', stopTimer);
 play.addEventListener('click', startTimer);
